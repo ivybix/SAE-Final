@@ -1,5 +1,6 @@
 package vue;
 
+import Controleur.Controleur;
 import javafx.application.HostServices;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -39,7 +40,8 @@ public class MenuBarRoot extends MenuBar {
             AffichageKSolutions affichageKSolutionsInstance,
             HBox contenuHbox,
             Pokedex pokedexInstance,
-            HostServices hostServices
+            HostServices hostServices,
+            Controleur controleur
     ) throws FileNotFoundException {
         this.affichageTriTopologiqueInstance = affichageTriTopologiqueInstance;
         this.affichageHeuristiqueGloutonInstance = affichageHeuristiqueGloutonInstance;
@@ -55,6 +57,11 @@ public class MenuBarRoot extends MenuBar {
 
 
         MenuItem ajoutScenario = new MenuItem("Ajout de scenario");
+        ajoutScenario.setId("ajoutScenario");
+        MenuItem modificationDeScenario = new MenuItem("modification de scenario");
+        modificationDeScenario.setId("modificationDeScenario");
+
+
         ajoutScenario.setOnAction(event -> {
             try {
                 AjoutScenario popup = new AjoutScenario(extraction);
@@ -63,7 +70,6 @@ public class MenuBarRoot extends MenuBar {
                 throw new RuntimeException(e);
             }
         });
-        MenuItem modificationDeScenario = new MenuItem("modification de scenario");
 
         modificationDeScenario.setOnAction(event -> {
             ModificationScenario popup = null;
@@ -82,31 +88,10 @@ public class MenuBarRoot extends MenuBar {
         refreshMenuScenarios(); // Remplit le menu avec les scénarios
 
         // Listener sur le toggleGroup : UNE SEULE FOIS ici
-        toggleGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
-            if (newToggle != null) {
-              int selectedScenario = (int) newToggle.getUserData();
-                try {
-
-                    affichageTriTopologiqueInstance.setExtraction(extraction);
-                    affichageTriTopologiqueInstance.setScenarioIndex(selectedScenario);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-
-                affichageKSolutionsInstance.setExtraction(extraction);
-                affichageKSolutionsInstance.setScenarioIndex(selectedScenario);
-
-                affichageHeuristiqueGloutonInstance.setExtraction(extraction);
-
-
-                affichageHeuristiqueGloutonInstance.setScenarioIndex(selectedScenario);
-                try {
-                    scenarioPanel.setScenario(extraction, selectedScenario);
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+        toggleGroup.selectedToggleProperty().addListener(
+                (observable, oldToggle, newToggle) ->
+                        controleur.monToggleListener().changed(observable, oldToggle, newToggle)
+        );
 
         // Sélection par défaut
         if (!toggleGroup.getToggles().isEmpty()) {
@@ -116,68 +101,51 @@ public class MenuBarRoot extends MenuBar {
         // Menus Tri Topologique et Heuristique gloutonne (identiques à ton code)
         Menu triTopologique = new Menu("Tri Topologique");
         MenuItem afficherLeTriTopologique = new MenuItem("Afficher le tri topologique");
-        afficherLeTriTopologique.setOnAction(e -> {
-
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageTriTopologique".equals(node.getId())
-            );
-
-
-            contenuHbox.getChildren().add(affichageTriTopologiqueInstance);
-
-        });
         MenuItem masquerLeTriTopologique = new MenuItem("Masquer le tri topologique");
-        masquerLeTriTopologique.setOnAction(e -> {
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageTriTopologique".equals(node.getId())
-            );
-        });
+        afficherLeTriTopologique.setId("afficherLeTriTopologique");
+        masquerLeTriTopologique.setId("masquerLeTriTopologique");
+
+
         triTopologique.getItems().addAll(afficherLeTriTopologique, masquerLeTriTopologique);
 
         Menu triHeuristiqueGlouton = new Menu("Tri Heuristique");
         MenuItem afficherLeTriHeuristique = new MenuItem("Afficher le tri heuristique");
-        afficherLeTriHeuristique.setOnAction(e -> {
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageHeuristiqueGlouton".equals(node.getId())
-            );
-            contenuHbox.getChildren().add(affichageHeuristiqueGloutonInstance);
-        });
         MenuItem masquerLeTriHeuristique = new MenuItem("Masquer le tri heuristique");
-        masquerLeTriHeuristique.setOnAction(e -> {
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageHeuristiqueGlouton".equals(node.getId())
-            );
-        });
+
+
+        afficherLeTriHeuristique.setId("afficherLeTriHeuristic");
+        masquerLeTriHeuristique.setId("masquerLeTriHeuristic");
+
         triHeuristiqueGlouton.getItems().addAll(afficherLeTriHeuristique, masquerLeTriHeuristique);
 
 
         Menu triKsolution = new Menu("Tri K Solution");
         MenuItem afficherTriKsolution = new MenuItem("Afficher le tri K Solution");
-        afficherTriKsolution.setOnAction(e -> {
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageKSolution".equals(node.getId())
-            );
-            contenuHbox.getChildren().add(affichageKSolutionsInstance);
-        });
         MenuItem masquerLeTriKsolution = new MenuItem("Masquer le tri K Solution");
-        masquerLeTriKsolution.setOnAction(e -> {
-            contenuHbox.getChildren().removeIf(node ->
-                    "affichageKSolution".equals(node.getId())
-            );
-        });
+
+        afficherTriKsolution.setId("afficherTriKSolution");
+        masquerLeTriKsolution.setId("masquerLeTriKSolution");
+
         triKsolution.getItems().addAll(afficherTriKsolution, masquerLeTriKsolution);
 
         Menu menuPokedex = new Menu("Pokedex");
         MenuItem afficherPokedex = new MenuItem("Afficher pokedex");
+        afficherPokedex.setId("afficherPokedex");
 
-        afficherPokedex.setOnAction(event -> {
-            try {
-                new Pokedex(hostServices);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
         menuPokedex.getItems().addAll(afficherPokedex);
+
+
+        afficherPokedex.setOnAction(controleur);
+
+        afficherLeTriTopologique.setOnAction(controleur);
+        afficherLeTriHeuristique.setOnAction(controleur);
+        afficherTriKsolution.setOnAction(controleur);
+
+
+        masquerLeTriTopologique.setOnAction(controleur);
+        masquerLeTriHeuristique.setOnAction(controleur);
+        masquerLeTriKsolution.setOnAction(controleur);
+
         // Ajout des menus à la barre
         this.getMenus().addAll(menuGestionScenarios, menuScenarios, triTopologique, triHeuristiqueGlouton, triKsolution, menuPokedex);
     }
@@ -185,7 +153,7 @@ public class MenuBarRoot extends MenuBar {
     /**
      * Recharge la liste des scénarios dans le menu.
      */
-    private void refreshMenuScenarios() {
+    public void refreshMenuScenarios() {
         menuScenarios.getItems().clear();
         toggleGroup.getToggles().clear();
 

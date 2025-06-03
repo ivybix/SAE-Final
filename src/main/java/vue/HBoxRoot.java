@@ -1,5 +1,6 @@
 package vue;
 
+import Controleur.Controleur;
 import javafx.application.HostServices;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -41,7 +42,10 @@ public class HBoxRoot extends VBox {
         affichageHeuristiqueInstance = new AffichageHeuristiqueGlouton(extraction, 0);
         affichageKSolutionsInstance = new AffichageKSolutions(extraction, 0);
 
-
+        Controleur controleur = new Controleur();
+        controleur.setExtraction(extraction);
+        controleur.setScenarioPanel(scenarioPanel);
+        controleur.setContenuHbox(contenuHbox);
         // Barre de menu contrôlant l'affichage dans le contenu central
         menuBarRoot = new MenuBarRoot(
                 scenarioPanel,
@@ -50,8 +54,15 @@ public class HBoxRoot extends VBox {
                 affichageKSolutionsInstance,
                 contenuHbox,
                 pokedexInstance,
-                hostServices
+                hostServices,
+                controleur
         );
+        controleur.setMenuBarRoot(menuBarRoot);
+        controleur.setHostServices(hostServices);
+        controleur.setAffichageTriTopologiqueInstance(affichageTriTopologiqueInstance);
+        controleur.setAffichageHeuristiqueGloutonInstance(affichageHeuristiqueInstance);
+        controleur.setAffichageKSolutionsInstance(affichageKSolutionsInstance);
+
         HBox HBoxScenarioPanel = new HBox(scenarioPanel);
         HBoxScenarioPanel.setAlignment(Pos.CENTER);
         HBoxScenarioPanel.setId("HBoxScenarioPanel");
