@@ -47,7 +47,7 @@ public class AffichageKSolutions extends VBox {
      */
     private void updateView() {
         this.getChildren().clear();
-        if (scenarioIndex > 2 ) {
+        if (scenarioIndex >= 2 ) {
             Label erreur = new Label("Erreur : Scénario sélectionné trop complexe \nScénario : " + scenarioIndex);
             erreur.setId("erreurLabel");
             this.getChildren().add(erreur);
