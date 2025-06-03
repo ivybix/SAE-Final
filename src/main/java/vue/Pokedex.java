@@ -21,13 +21,56 @@ import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.util.Map;
 
+/**
+ * Classe Pokedex qui affiche une fenêtre JavaFX listant les Pokémons avec leur ville associée.
+ * 
+ * Cette classe construit une interface graphique contenant une liste déroulante
+ * de Pokémons extraits via la classe {@link Extraction}, affichant pour chaque Pokémon :
+ * 
+ *   son nom en français,
+ *   la ville associée,
+ *   une image provenant d'une URL basée sur son nom anglais,
+ *   un lien hypertexte vers sa fiche officielle sur pokemon.com.
+ * 
+ * 
+ * 
+ * Les images sont chargées depuis Internet et un placeholder local est utilisé en cas d'erreur.
+ * Le nom des Pokémons est normalisé pour générer les URLs correctes.
+ * 
+ * 
+ * La fenêtre JavaFX est affichée dès la création d'une instance.
+ * 
+ *
+ * @see Extraction
+ * @see Pokemons
+ * @see javafx.application.HostServices
+ */
 public class Pokedex {
 
+    /**
+     * Image utilisée en remplacement lorsqu'une image Pokémon ne peut être chargée.
+     */
     private static final Image IMAGE_PLACEHOLDER = chargerImagePlaceholder();
 
+    /**
+     * Instance d'Extraction permettant d'accéder aux données membres/villes.
+     */
     private Extraction extraction;
+
+    /**
+     * Services d'hôte JavaFX permettant d'ouvrir des liens dans un navigateur.
+     */
     private HostServices hostServices;
 
+    /**
+     * Constructeur qui initialise les données et crée la fenêtre JavaFX affichant la liste des Pokémons.
+     * 
+     * Pour chaque Pokémon extrait, une ligne contenant l'image, le nom, la ville et un lien vers la fiche officielle est créée.
+     * 
+     *
+     * @param hostServices service JavaFX pour ouvrir des liens externes dans un navigateur
+     * @throws Exception si une erreur survient lors de l'initialisation ou du chargement des ressources
+     */
     public Pokedex(HostServices hostServices) throws Exception {
         this.hostServices = hostServices;
         this.extraction = new Extraction();
@@ -83,6 +126,15 @@ public class Pokedex {
         stage.show();
     }
 
+    /**
+     * Charge une image placeholder locale utilisée quand une image Pokémon ne peut pas être chargée depuis Internet.
+     * 
+     * Tente de charger l'image "images/placeholder.png" depuis le disque,
+     * et en cas d'erreur, retourne une image générique depuis une URL en ligne.
+     * 
+     *
+     * @return l'image placeholder chargée
+     */
     private static Image chargerImagePlaceholder() {
         try (InputStream flux = Files.newInputStream(Paths.get("images/placeholder.png"))) {
             return new Image(flux, 100, 100, true, true);
@@ -92,6 +144,20 @@ public class Pokedex {
         }
     }
 
+    /**
+     * Normalise un nom de Pokémon pour générer une URL valide.
+     * 
+     * La normalisation consiste à :
+     * 
+     *   mettre en minuscules,
+     *   supprimer les accents et signes diacritiques,
+     *   remplacer les espaces et underscores par des tirets.
+     * 
+     * 
+     *
+     * @param nom le nom à normaliser
+     * @return le nom normalisé compatible avec les URL des images et fiches Pokémon
+     */
     private String normaliserNom(String nom) {
         String normalise = Normalizer.normalize(nom.toLowerCase(), Normalizer.Form.NFD);
         normalise = normalise.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
