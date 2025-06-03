@@ -9,7 +9,6 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import modele.Extraction;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,6 +17,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Classe permettant de modifier un scénario existant.
+ *
+ * Cette classe affiche une fenêtre JavaFX avec une ChoiceBox permettant de sélectionner un scénario.
+ * Une grille présente les paires vendeur/acheteur sous forme de ComboBox éditables avec autocomplétion.
+ * L'utilisateur peut modifier ces paires puis enregistrer les modifications,
+ * qui sont validées avant d'être sauvegardées dans l'objet Extraction.
+ */
 public class ModificationScenario {
     private final Extraction extraction;
     private final ChoiceBox<Integer> scenarioChoiceBox = new ChoiceBox<>();
@@ -27,12 +34,19 @@ public class ModificationScenario {
     private final VBox root = new VBox(10);
     private Stage stage;
 
+    /**
+     * Constructeur qui initialise la fenêtre de modification des scénarios.
+     *
+     * @param extraction l'objet Extraction contenant les scénarios et les membres
+     * @throws IOException en cas d'erreur lors du chargement des icônes ou ressources
+     */
     public ModificationScenario(Extraction extraction) throws IOException {
         this.stage = new Stage();
         this.extraction = extraction;
-            // Chargement de l'icône d'ajout
-            stage.getIcons().add(new Image(Files.newInputStream(Paths.get("images/modification.png"))));
-            stage.setTitle("Modification de scénario");
+
+        stage.getIcons().add(new Image(Files.newInputStream(Paths.get("images/modification.png"))));
+        stage.setTitle("Modification de scénario");
+
         grid.setPadding(new Insets(10));
         grid.setHgap(10);
         grid.setVgap(10);
@@ -58,6 +72,12 @@ public class ModificationScenario {
         stage.show();
     }
 
+    /**
+     * Affiche dans la grille les paires vendeur/acheteur du scénario sélectionné.
+     * Chaque paire est modifiable via des ComboBox avec autocomplétion.
+     *
+     * @param numScenario numéro du scénario à afficher
+     */
     private void afficherScenario(int numScenario) {
         grid.getChildren().clear();
         vendeurs.clear();
@@ -92,6 +112,13 @@ public class ModificationScenario {
         stage.sizeToScene();
     }
 
+    /**
+     * Active une fonctionnalité d'autocomplétion sur une ComboBox éditable.
+     *
+     * Lors de la saisie, la liste des éléments affichés est filtrée en fonction du texte entré.
+     *
+     * @param comboBox la ComboBox à rendre éditable avec autocomplétion
+     */
     private void recherchePokemon(ComboBox<String> comboBox) {
         comboBox.setEditable(true);
         List<String> originalItems = new ArrayList<>(comboBox.getItems());
@@ -99,7 +126,6 @@ public class ModificationScenario {
         comboBox.getEditor().textProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal == null) return;
 
-            // Éviter de modifier les items si le texte est identique à la sélection
             if (comboBox.getValue() != null && comboBox.getValue().equals(newVal)) return;
 
             List<String> filtered = new ArrayList<>();
@@ -109,20 +135,25 @@ public class ModificationScenario {
                 }
             }
 
-            // Mémoriser la position du curseur pour ne pas sauter
             int caretPos = comboBox.getEditor().getCaretPosition();
 
-            // Mettre à jour les items sans déclencher en cascade
             comboBox.setItems(FXCollections.observableArrayList(filtered));
             comboBox.getEditor().setText(newVal);
             comboBox.getEditor().positionCaret(caretPos);
 
-            // Garde la popup ouverte
             if (!comboBox.isShowing()) comboBox.show();
         });
     }
 
-
+    /**
+     * Enregistre les modifications du scénario sélectionné après validation.
+     *
+     * Vérifie que les paires vendeur/acheteur sont valides et que le scénario est cohérent.
+     * Affiche des alertes en cas d'erreur ou confirme la réussite.
+     *
+     * @param scenarioID identifiant du scénario modifié
+     * @throws IOException en cas d'erreur lors du chargement des icônes pour les alertes
+     */
     private void enregistrerModifications(int scenarioID) throws IOException {
         HashMap<String, String> nouveauContenu = new HashMap<>();
 
@@ -147,7 +178,7 @@ public class ModificationScenario {
             return;
         }
 
-        if (!extraction.validerScenario( nouveauContenu)) {
+        if (!extraction.validerScenario(nouveauContenu)) {
             alert.setTitle("Erreur");
             alert.setHeaderText("Scénario non cohérent");
             alert.setContentText("Des incohérences empêchent la validation du scénario.");
@@ -168,6 +199,11 @@ public class ModificationScenario {
         stage.close();
     }
 
+    /**
+     * Retourne la fenêtre (Stage) utilisée par cette classe.
+     *
+     * @return la Stage de la fenêtre de modification
+     */
     public Stage getStage() {
         return stage;
     }
