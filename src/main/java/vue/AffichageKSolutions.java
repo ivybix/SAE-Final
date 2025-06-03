@@ -47,6 +47,13 @@ public class AffichageKSolutions extends VBox {
      */
     private void updateView() {
         this.getChildren().clear();
+        if (scenarioIndex > 2 ) {
+            Label erreur = new Label("Erreur : Scénario sélectionné trop complexe \nScénario : " + scenarioIndex);
+            erreur.setId("erreurLabel");
+            this.getChildren().add(erreur);
+            return;
+        }
+
         try {
             AlgoKSolution algo = new AlgoKSolution(extraction, scenarioIndex);
             resume = algo.genererResumeScenario(scenarioIndex, 1, extraction);

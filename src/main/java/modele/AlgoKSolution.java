@@ -342,6 +342,10 @@ public class AlgoKSolution {
 
     // Méthodes de compatibilité avec l'interface existante
     public void genererKSolutions(int k) throws Exception {
+        if (numeroScenario > 2) {
+            System.out.println("Erreur : Scénario sélectionné trop complexe");
+            return;
+        }
         List<ResultatSolution> solutions = genererKSolutionsResume(k);
 
         System.out.println("Nombre total de solutions uniques trouvees : " + solutions.size());
