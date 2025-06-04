@@ -12,6 +12,7 @@ import java.util.*;
  * 3. Limite dynamique du nombre de solutions gardées
  * 4. Calcul incrémental des distances
  * 5. Heuristiques de tri des sommets
+ * 6. Détection efficace des doublons basée sur le parcours final
  */
 public class AlgoKSolution {
     private int kLimite;
@@ -21,12 +22,15 @@ public class AlgoKSolution {
     private final Set<String> villes;
     private final PriorityQueue<ResultatSolution> topKSolutions;
     private int meilleureDistanceActuelle = Integer.MAX_VALUE;
-    private final Set<String> solutionsUniques = new HashSet<>(); // Pour éviter les doublons
+
+    // Changement : utiliser le parcours final comme clé unique au lieu de l'ordre des sommets
+    private final Set<String> parcoursUniques = new HashSet<>();
+    private final Map<String, Integer> distancesParParcours = new HashMap<>();
+
     private static final long LIMITE_TEMPS_MS = 10_000; // 10 secondes
     private static final int LIMITE_CALCULS = 500_000; // Nombre max de branches explorées
     private long debutExecution;
     private int compteurCalculs;
-
 
     // Cache des distances pour éviter les recalculs
     private final Map<String, Integer> cacheDistances = new HashMap<>();
@@ -34,6 +38,7 @@ public class AlgoKSolution {
     // Graphe des dépendances pour l'ordre topologique
     private final Map<String, Set<String>> dependances = new HashMap<>();
     private final Map<String, Integer> compteurPredecesseurs = new HashMap<>();
+
     /**
      * Génère un résumé du meilleur scénario parmi les K meilleures solutions possibles
      * pour un scénario donné.
@@ -54,6 +59,7 @@ public class AlgoKSolution {
 
         return topSolutions.get(0).resume;
     }
+
     /**
      * Génère les K meilleures solutions optimisées pour le scénario courant.
      *
@@ -89,7 +95,6 @@ public class AlgoKSolution {
         return resultats.subList(0, Math.min(k, resultats.size()));
     }
 
-
     private static class ResultatSolution {
         final List<String> ordreSommets;
         final ResumeScenario resume;
@@ -115,8 +120,6 @@ public class AlgoKSolution {
             villes.add(villeAcheteur);
         }
     }
-
-
 
     /**
      * Construit le graphe des dépendances pour optimiser l'ordre de génération
@@ -165,15 +168,27 @@ public class AlgoKSolution {
 
         if (ordreCourant.size() == sommetsRestants.size()) {
             if (estSolutionValide(ordreCourant)) {
-                String cleUnique = String.join(",", ordreCourant);
-                if (solutionsUniques.contains(cleUnique)) {
-                    return;
+                List<String> parcours = convertirEnParcours(ordreCourant);
+
+                // Créer une clé basée sur le parcours final (sans Velizy de début et fin)
+                String cleParcours = creerCleParcours(parcours);
+
+                // Vérifier si ce parcours existe déjà
+                if (parcoursUniques.contains(cleParcours)) {
+                    return; // Doublon détecté, ignorer
                 }
 
-                List<String> parcours = convertirEnParcours(ordreCourant);
                 int distanceTotale = calculerDistanceComplete(parcours);
 
-                solutionsUniques.add(cleUnique);
+                // Vérifier aussi si une distance identique existe pour ce parcours
+                if (distancesParParcours.containsKey(cleParcours) &&
+                        distancesParParcours.get(cleParcours) <= distanceTotale) {
+                    return; // Une solution identique ou meilleure existe déjà
+                }
+
+                // Enregistrer ce parcours comme unique
+                parcoursUniques.add(cleParcours);
+                distancesParParcours.put(cleParcours, distanceTotale);
 
                 if (distanceTotale < meilleureDistanceActuelle) {
                     meilleureDistanceActuelle = distanceTotale;
@@ -218,6 +233,20 @@ public class AlgoKSolution {
             ordreCourant.remove(ordreCourant.size() - 1);
             utilises.remove(sommet);
         }
+    }
+
+    /**
+     * Crée une clé unique basée sur le parcours effectif des villes (sans les Velizy de début/fin)
+     * Cette clé permet de détecter les vrais doublons de parcours
+     */
+    private String creerCleParcours(List<String> parcours) {
+        if (parcours.size() <= 2) {
+            return ""; // Parcours vide ou minimal
+        }
+
+        // Extraire le parcours sans les Velizy de début et fin
+        List<String> parcoursEffectif = parcours.subList(1, parcours.size() - 1);
+        return String.join("->", parcoursEffectif);
     }
 
     /**
@@ -342,7 +371,7 @@ public class AlgoKSolution {
 
     // Méthodes de compatibilité avec l'interface existante
     public void genererKSolutions(int k) throws Exception {
-        if (numeroScenario >= 2) {
+        if (numeroScenario >=  2 ) {
             System.out.println("Erreur : Scénario sélectionné trop complexe");
             return;
         }
